@@ -1,5 +1,7 @@
 # Special Dates Tracker
 
+![image](https://github.com/user-attachments/assets/03003b51-910c-4f65-a42c-11624e37e363)
+
 A Flask web application for tracking important dates and managing wish lists for your loved ones.
 
 ## Features
