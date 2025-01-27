@@ -1,0 +1,135 @@
+<!-- dashboard.html -->
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>Your Special Dates</h2>
+            <a href="{{ url_for('add_date') }}" class="btn btn-primary">Add New Date</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% for date in dates %}
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ date.title }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ date.date.strftime('%B %d, %Y') }}</h6>
+                <p class="card-text">{{ date.description }}</p>
+                <span class="badge bg-secondary">{{ date.category }}</span>
+                
+                <div class="mt-3">
+                    <h6>Wishlist Items:</h6>
+                    <ul class="list-group" id="wishlist-{{ date.id }}">
+                        {% for item in date.wishlist_items %}
+                        <li class="list-group-item">
+                            {{ item.item_name }}
+                            {% if item.price %}
+                                <span class="badge bg-primary float-end">${{ "%.2f"|format(item.price) }}</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    
+                    <button class="btn btn-sm btn-outline-primary mt-2" 
+                            onclick="showAddWishlistItem('{{ date.id }}')">
+                        Add Wishlist Item
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal for adding wishlist items -->
+<div class="modal fade" id="wishlistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Wishlist Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="wishlistForm">
+                    <input type="hidden" id="dateId">
+                    <div class="mb-3">
+                        <label for="itemName" class="form-label">Item Name</label>
+                        <input type="text" class="form-control" id="itemName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="itemDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="itemDescription" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="itemUrl" class="form-label">URL</label>
+                        <input type="url" class="form-control" id="itemUrl">
+                    </div>
+                    <div class="mb-3">
+                        <label for="itemPrice" class="form-label">Price ($)</label>
+                        <input type="number" step="0.01" class="form-control" id="itemPrice">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="submitWishlistItem()">Add Item</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    let modal;
+    document.addEventListener('DOMContentLoaded', function() {
+        modal = new bootstrap.Modal(document.getElementById('wishlistModal'));
+    });
+
+    function showAddWishlistItem(dateId) {
+        document.getElementById('dateId').value = dateId.toString();
+        document.getElementById('itemName').value = '';
+        document.getElementById('itemDescription').value = '';
+        document.getElementById('itemUrl').value = '';
+        document.getElementById('itemPrice').value = '';
+        modal.show();
+    }
+
+    function submitWishlistItem() {
+        const dateId = document.getElementById('dateId').value;
+        const itemData = {
+            item_name: document.getElementById('itemName').value,
+            description: document.getElementById('itemDescription').value,
+            url: document.getElementById('itemUrl').value,
+            price: parseFloat(document.getElementById('itemPrice').value) || null
+        };
+
+        fetch(`/add_wishlist_item/${dateId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(itemData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            const wishlist = document.getElementById(`wishlist-${dateId}`);
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.innerHTML = `
+                ${data.item_name}
+                ${data.price ? `<span class="badge bg-primary float-end">$${data.price.toFixed(2)}</span>` : ''}
+            `;
+            wishlist.appendChild(li);
+            modal.hide();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to add wishlist item');
+        });
+    }
+</script>
+{% endblock %}
+{% endblock %}
