@@ -51,6 +51,22 @@ python app.py
 
 The application will be available at `http://127.0.0.1:5000/`
 
+## Environment Setup
+
+1. Copy the environment template:
+```bash
+cp .env.example .env
+```
+
+2. Generate a secure secret key:
+```python
+python -c "import secrets; print(secrets.token_hex(24))"
+```
+
+3. Update `.env` with your secret key and database settings
+
+For development, the SQLite database is sufficient. For production, we'll switch to PostgreSQL later.
+
 ## Project Structure
 ```
 special-dates-tracker/
