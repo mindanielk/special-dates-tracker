@@ -73,31 +73,27 @@ For development, the SQLite database is sufficient. For production, we'll switch
 
 ## Developing with GitHub Codespaces
 
-### Quick Start
-1. Click the green "Code" button on the repository
+### Step 1: Open in Codespaces
+1. Click the green "Code" button above
 2. Select "Open with Codespaces"
 3. Click "New codespace"
 
-### Running the Application
-1. Once your Codespace loads, open the terminal and run:
+### Step 2: Initial Setup
+Once your Codespace loads, run these commands in the terminal:
+
 ```bash
+# Copy environment file
 cp .env.example .env
-```
 
-2. Generate a secret key by running:
-```bash
-python -c "import secrets; print(secrets.token_hex(24))"
-```
+# Generate secret key and save it
+python -c "import secrets; print(secrets.token_hex(24))" >> .env
 
-3. Update the `.env` file with your secret key
-
-4. Initialize the database:
-```bash
+# Initialize database
+flask db init
+flask db migrate -m "Initial migration"
 flask db upgrade
-```
 
-5. Start the Flask application:
-```bash
+# Start the application
 flask run
 ```
 
