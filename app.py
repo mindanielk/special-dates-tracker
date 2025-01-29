@@ -6,6 +6,7 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 from flask_migrate import Migrate
+from months import Months
 
 #load environment variables
 load_dotenv()
