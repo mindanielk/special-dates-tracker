@@ -69,6 +69,72 @@ python -c "import secrets; print(secrets.token_hex(24))"
 
 For development, the SQLite database is sufficient. For production, we'll switch to PostgreSQL later.
 
+# Special Dates Tracker
+
+## Developing with GitHub Codespaces
+
+### Quick Start
+1. Click the green "Code" button on the repository
+2. Select "Open with Codespaces"
+3. Click "New codespace"
+
+### Running the Application
+1. Once your Codespace loads, open the terminal and run:
+```bash
+cp .env.example .env
+```
+
+2. Generate a secret key by running:
+```bash
+python -c "import secrets; print(secrets.token_hex(24))"
+```
+
+3. Update the `.env` file with your secret key
+
+4. Initialize the database:
+```bash
+flask db upgrade
+```
+
+5. Start the Flask application:
+```bash
+flask run
+```
+
+6. Click the "Ports" tab in the bottom panel
+7. Look for port 5000 - it will have a link to view the application
+
+### Collaboration Features
+- **Live Share**: Click the Live Share extension icon to start a collaboration session
+- **Source Control**: Use the Source Control tab to manage changes
+- **Pull Requests**: Create and review PRs directly in Codespaces
+- **Terminal Sharing**: Share your terminal during Live Share sessions
+- **Port Forwarding**: All team members can access the running application
+
+### Development Workflow
+1. Create a new branch for your feature:
+```bash
+git checkout -b feature/your-feature-name
+```
+
+2. Make your changes and test them
+
+3. Commit and push your changes:
+```bash
+git add .
+git commit -m "Description of your changes"
+git push origin feature/your-feature-name
+```
+
+4. Create a Pull Request from the GitHub interface
+
+### Environment Variables
+Required environment variables in `.env`:
+- `FLASK_APP=app.py`
+- `FLASK_ENV=development`
+- `SECRET_KEY` (generate using the command above)
+- `DATABASE_URL=sqlite:///special_dates.db`
+
 ## Project Structure
 ```
 special-dates-tracker/
