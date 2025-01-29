@@ -96,9 +96,3 @@ special-dates-tracker/
 4. Commit your changes (`git commit -am 'Add new feature'`)
 5. Push to the branch (`git push origin feature/your-feature`)
 6. Create a Pull Request
-
-## Team Members
-
-- [Team Member 1] - AI Integration
-- [Team Member 2] - API Integration
-- [Team Member 3] - Security Implementation
