@@ -6,7 +6,6 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 from flask_migrate import Migrate
-from months import Months
 
 #load environment variables
 load_dotenv()
@@ -21,6 +20,31 @@ migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+map_months = {
+    1: ["January", 31],
+    2: ["February", 28],
+    3: ["March", 31],
+    4: ["April", 30],
+    5: ["May", 31],
+    6: ["June", 30],
+    7: ["July", 31],
+    8: ["August", 31],
+    9: ["September", 30],
+    10:["October", 31],
+    11:["November", 30],
+    12:["December", 31]
+}
+
+week_map = {
+    1: "Sunday",
+    2: "Monday",
+    3: "Tuesday",
+    4: "Wednesday",
+    5: "Thursday",
+    6: "Friday",
+    7: "Saturday"
+}
+
 # Database Models
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -34,6 +58,14 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+class Calendar(db.Model):
+    date = db.Column(db.String, primary_key=True)
+    day_week = db.Column(db.Integer)
+    day_month = db.Column(db.Integer)
+    month = db.Column(db.Integer)
+    year = db.Column(db.Integer)
+    events = db.Column(db.JSON, nullable=True)     ## Dictionary of event IDs
 
 class SpecialDate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -114,6 +146,10 @@ def add_date():
         category = request.form.get('category')
         
         date = datetime.strptime(date_str, '%Y-%m-%d')
+        date_array = date_str.split('-')
+        year = int(date_array[0])
+        month = int(date_array[1])
+        day = int(date_array[2])
         
         special_date = SpecialDate(
             title=title,
@@ -122,7 +158,23 @@ def add_date():
             category=category,
             user_id=current_user.id
         )
-        
+
+        weekday = datetime(year, month, day).weekday() + 1
+        new_event = Calendar(
+            date = date,
+            day_week = weekday,
+            day_month = day,
+            year = year,
+            month = month,
+            events = {
+                'title': title,
+                'date': date,
+                'description': description,
+                'category': category,
+                'user_id': current_user.id
+            }
+        )
+
         db.session.add(special_date)
         db.session.commit()
         
