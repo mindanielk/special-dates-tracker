@@ -6,6 +6,7 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 from flask_migrate import Migrate
+import json
 
 #load environment variables
 load_dotenv()
@@ -162,7 +163,7 @@ def add_date():
         weekday = datetime(year, month, day).weekday() + 1
         update_entry('add', {
                     'title': title,
-                    'date': date,
+                    'date': date_str,
                     'description': description,
                     'category': category,
                     'user_id': current_user.id,
@@ -192,7 +193,7 @@ def remove_date():
 
         update_entry('remove', {
                     'title': title,
-                    'date': date,
+                    'date': date_str,
                     'description': '',
                     'category': '',
                     'user_id': '',
@@ -217,26 +218,25 @@ def update_entry(operation, event):
     title = event['title']
     description = event['description']
     category = event['category']
-    check_date = Calendar.query.filter_by(date=event['date']).first()
+    check_date = Calendar.query.filter_by(date=date).first()
     
     match operation:
         case 'add':
             if check_date == None:
-                new_calendar_entry = Calendar(
-                    date = date,
-                    day_week = weekday,
-                    day_month = day_month,
-                    year = year,
-                    month = month,
-                    events = jsonify({title: {
-                        'title': title,
-                        'date': date,
-                        'description': description,
-                        'category': category,
-                        'user_id': current_user.id
-                    }})
-                )
-                db.session.add(new_calendar_entry)  # Commit the new calendar entry
+                Calendar(
+                date = date,
+                day_week = weekday,
+                day_month = day_month,
+                year = year,
+                month = month,
+                events = json.dumps({title: {
+                    'title': title,
+                    'date': date,
+                    'description': description,
+                    'category': category,
+                    'user_id': current_user.id
+                }})
+            )
             else:
                 current_events_json = check_date.events
                 current_events = json.loads(current_events_json)
@@ -247,7 +247,7 @@ def update_entry(operation, event):
                     'category': category,
                     'user_id': current_user.id
                 }
-                check_date.events = jsonify(current_events)
+                check_date.events = json.dumps(current_events)
         case 'remove':
             if check_date == None:
                 return
@@ -255,7 +255,7 @@ def update_entry(operation, event):
                 current_events_json = check_date.events
                 current_events = json.loads(current_events_json)
                 del current_events[title]
-                check_date.events = jsonify(current_events)
+                check_date.events = json.dumps(current_events)
 
 @app.route('/add_wishlist_item/<int:date_id>', methods=['POST'])
 @login_required
