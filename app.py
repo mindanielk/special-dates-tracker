@@ -60,7 +60,7 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
     
 class Calendar(db.Model):
-    date = db.Column(db.String, primary_key=True)
+    date = db.Column(db.String, primary_key=True, unique=True)
     day_week = db.Column(db.Integer)
     day_month = db.Column(db.Integer)
     month = db.Column(db.Integer)
@@ -180,10 +180,34 @@ def add_date():
     
     return render_template('add_date.html')
 
+'''
+@app.route('/remove_date', methods=['GET', 'POST'])
+@login_required
+def remove_date():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        date_str = request.form.get('date')
+
+        date = datetime.strptime(date_str, '%Y-%m-%d')
+
+        update_entry('remove', {
+                    'title': title,
+                    'date': date,
+                    'description': '',
+                    'category': '',
+                    'user_id': '',
+                    'year': '',
+                    'month': '',
+                    'day': '',
+                    'weekday': ''
+                })
+
+        db.session.commit()
+'''
+
 # operation is a string(add or remove)
 # event is a dictionary of the relevant information to create or remove an event
 def update_entry(operation, event):
-    check_date = Calendar.query.filter_by(date=event['date']).first()
     date = event['date']
     day_week = event['weekday']
     day_month = event['day']
@@ -193,10 +217,12 @@ def update_entry(operation, event):
     title = event['title']
     description = event['description']
     category = event['category']
+    check_date = Calendar.query(Calendar.date).\
+        filter_by(date=event['date']).first()
     
     match operation:
         case 'add':
-            if check_date == None:
+            if check_date == False:
                 Calendar(
                 date = date,
                 day_week = weekday,
@@ -230,8 +256,6 @@ def update_entry(operation, event):
                 current_events = json.loads(current_events_json)
                 del current_events[title]
                 check_date.events = jsonify(current_events)
-
-    db.session.commit()
 
 @app.route('/add_wishlist_item/<int:date_id>', methods=['POST'])
 @login_required
