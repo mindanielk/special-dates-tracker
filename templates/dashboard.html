@@ -1,4 +1,3 @@
-<!-- dashboard.html -->
 {% extends "base.html" %}
 {% block content %}
 <div class="row">
@@ -8,6 +7,29 @@
             <a href="{{ url_for('add_date') }}" class="btn btn-primary">Add New Date</a>
         </div>
     </div>
+</div>
+
+<div class="calendar">
+    <div class="calendar-header text-center d-flex justify-content-between align-items-center" id="calendarHeader">
+        <!-- Navigation buttons to go to the previous and next month -->
+        <button class="btn btn-secondary" onclick="changeMonth(-1)"><</button>
+        <span id="calendarMonthYear">February 2025</span>
+        <button class="btn btn-secondary" onclick="changeMonth(1)">></button>
+    </div>
+    
+    <!-- Weekday headers (Sun, Mon, Tue, etc.) -->
+    <div class="calendar-days row">
+        <div class="col text-center">Sun</div>
+        <div class="col text-center">Mon</div>
+        <div class="col text-center">Tue</div>
+        <div class="col text-center">Wed</div>
+        <div class="col text-center">Thu</div>
+        <div class="col text-center">Fri</div>
+        <div class="col text-center">Sat</div>
+    </div>
+    
+    <!-- Calendar Dates -->
+    <div class="calendar-dates row" id="calendarDates"></div>
 </div>
 
 <div class="row">
@@ -84,9 +106,77 @@
 {% block scripts %}
 <script>
     let modal;
+    let currentMonth = new Date().getMonth(); // Current month (0-indexed)
+    let currentYear = new Date().getFullYear(); // Current year
+
     document.addEventListener('DOMContentLoaded', function() {
         modal = new bootstrap.Modal(document.getElementById('wishlistModal'));
+        generateCalendar();  // Generate the initial calendar when the page loads
     });
+
+    function changeMonth(offset) {
+        currentMonth += offset;
+
+        // Handle year transition
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear -= 1;
+        } else if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear += 1;
+        }
+
+        generateCalendar();  // Regenerate calendar with updated month/year
+    }
+
+    function generateCalendar() {
+        const monthNames = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ];
+
+        // Update calendar header
+        document.getElementById("calendarMonthYear").textContent = `${monthNames[currentMonth]} ${currentYear}`;
+        
+        // Calculate the first day of the month and the number of days in the month
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay(); // Day the month starts
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate(); // Total days in the month
+
+        const calendarDates = document.getElementById("calendarDates");
+        calendarDates.innerHTML = ""; // Clear previous calendar content
+
+        let currentDay = 1;
+        
+        // Creating the calendar grid layout dynamically
+        for (let week = 0; week < 6; week++) {
+            const rowDiv = document.createElement("div");
+            rowDiv.classList.add("row"); // Bootstrap row class
+
+            for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+                const colDiv = document.createElement("div");
+                colDiv.classList.add("col", "text-center"); // Add Bootstrap column class and center the content
+
+                // If we're in the first week, add empty divs before the 1st of the month
+                if (week === 0 && dayOfWeek < firstDayOfMonth) {
+                    colDiv.classList.add("empty"); // Add empty day
+                } else if (currentDay <= daysInMonth) {
+                    // Add actual days of the month
+                    colDiv.innerHTML = `
+                        <div class="card">
+                            <div class="card-body p-2">${currentDay}</div>
+                        </div>
+                    `;
+                    currentDay++;
+                }
+
+                rowDiv.appendChild(colDiv);
+            }
+            calendarDates.appendChild(rowDiv);
+
+            // Stop once we've filled all days of the month
+            if (currentDay > daysInMonth) break;
+        }
+    }
 
     function showAddWishlistItem(dateId) {
         document.getElementById('dateId').value = dateId.toString();
