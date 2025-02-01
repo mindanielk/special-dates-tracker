@@ -217,26 +217,26 @@ def update_entry(operation, event):
     title = event['title']
     description = event['description']
     category = event['category']
-    check_date = Calendar.query(Calendar.date).\
-        filter_by(date=event['date']).first()
+    check_date = Calendar.query.filter_by(date=event['date']).first()
     
     match operation:
         case 'add':
-            if check_date == False:
-                Calendar(
-                date = date,
-                day_week = weekday,
-                day_month = day_month,
-                year = year,
-                month = month,
-                events = jsonify({title: {
-                    'title': title,
-                    'date': date,
-                    'description': description,
-                    'category': category,
-                    'user_id': current_user.id
-                }})
-            )
+            if check_date == None:
+                new_calendar_entry = Calendar(
+                    date = date,
+                    day_week = weekday,
+                    day_month = day_month,
+                    year = year,
+                    month = month,
+                    events = jsonify({title: {
+                        'title': title,
+                        'date': date,
+                        'description': description,
+                        'category': category,
+                        'user_id': current_user.id
+                    }})
+                )
+                db.session.add(new_calendar_entry)  # Commit the new calendar entry
             else:
                 current_events_json = check_date.events
                 current_events = json.loads(current_events_json)
