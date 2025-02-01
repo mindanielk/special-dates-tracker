@@ -20,7 +20,7 @@ migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-map_months = {
+month_map = {
     1: ["January", 31],
     2: ["February", 28],
     3: ["March", 31],
@@ -146,10 +146,6 @@ def add_date():
         category = request.form.get('category')
         
         date = datetime.strptime(date_str, '%Y-%m-%d')
-        date_array = date_str.split('-')
-        year = int(date_array[0])
-        month = int(date_array[1])
-        day = int(date_array[2])
         
         special_date = SpecialDate(
             title=title,
@@ -159,21 +155,22 @@ def add_date():
             user_id=current_user.id
         )
 
+        date_array = date_str.split('-')
+        year = int(date_array[0])
+        month = int(date_array[1])
+        day = int(date_array[2])
         weekday = datetime(year, month, day).weekday() + 1
-        new_event = Calendar(
-            date = date,
-            day_week = weekday,
-            day_month = day,
-            year = year,
-            month = month,
-            events = {
-                'title': title,
-                'date': date,
-                'description': description,
-                'category': category,
-                'user_id': current_user.id
-            }
-        )
+        update_entry('add', {
+                    'title': title,
+                    'date': date,
+                    'description': description,
+                    'category': category,
+                    'user_id': current_user.id,
+                    'year': year,
+                    'month': month,
+                    'day': day,
+                    'weekday': weekday
+                })
 
         db.session.add(special_date)
         db.session.commit()
@@ -182,6 +179,59 @@ def add_date():
         return redirect(url_for('dashboard'))
     
     return render_template('add_date.html')
+
+# operation is a string(add or remove)
+# event is a dictionary of the relevant information to create or remove an event
+def update_entry(operation, event):
+    check_date = Calendar.query.filter_by(date=event['date']).first()
+    date = event['date']
+    day_week = event['weekday']
+    day_month = event['day']
+    year = event['year']
+    month = event['month']
+    weekday = event['weekday']
+    title = event['title']
+    description = event['description']
+    category = event['category']
+    
+    match operation:
+        case 'add':
+            if check_date == None:
+                Calendar(
+                date = date,
+                day_week = weekday,
+                day_month = day_month,
+                year = year,
+                month = month,
+                events = jsonify({title: {
+                    'title': title,
+                    'date': date,
+                    'description': description,
+                    'category': category,
+                    'user_id': current_user.id
+                }})
+            )
+            else:
+                current_events_json = check_date.events
+                current_events = json.loads(current_events_json)
+                current_events[title] = {
+                    'title': title,
+                    'date': date,
+                    'description': description,
+                    'category': category,
+                    'user_id': current_user.id
+                }
+                check_date.events = jsonify(current_events)
+        case 'remove':
+            if check_date == None:
+                return
+            else:
+                current_events_json = check_date.events
+                current_events = json.loads(current_events_json)
+                del current_events[title]
+                check_date.events = jsonify(current_events)
+
+    db.session.commit()
 
 @app.route('/add_wishlist_item/<int:date_id>', methods=['POST'])
 @login_required
