@@ -135,7 +135,8 @@ def login():
 @login_required
 def dashboard():
     dates = SpecialDate.query.filter_by(user_id=current_user.id).order_by(SpecialDate.date).all()
-    return render_template('dashboard.html', dates=dates)
+    calendar_dates = get_events()
+    return render_template('dashboard.html', dates=dates, calendar_dates=calendar_dates)
 
 @app.route('/add_date', methods=['GET', 'POST'])
 @login_required
@@ -147,6 +148,7 @@ def add_date():
         category = request.form.get('category')
         
         date = datetime.strptime(date_str, '%Y-%m-%d')
+        print(date)
         
         special_date = SpecialDate(
             title=title,
@@ -223,7 +225,7 @@ def update_entry(operation, event):
     match operation:
         case 'add':
             if check_date == None:
-                Calendar(
+                new_entry = Calendar(
                 date = date,
                 day_week = weekday,
                 day_month = day_month,
@@ -236,7 +238,8 @@ def update_entry(operation, event):
                     'category': category,
                     'user_id': current_user.id
                 }})
-            )
+                )
+                db.session.add(new_entry)
             else:
                 current_events_json = check_date.events
                 current_events = json.loads(current_events_json)
@@ -248,14 +251,30 @@ def update_entry(operation, event):
                     'user_id': current_user.id
                 }
                 check_date.events = json.dumps(current_events)
+            db.session.commit()
         case 'remove':
-            if check_date == None:
-                return
-            else:
+            if check_date != None:
                 current_events_json = check_date.events
                 current_events = json.loads(current_events_json)
-                del current_events[title]
-                check_date.events = json.dumps(current_events)
+                if title in current_events:
+                    del current_events[title]
+                    check_date.events = json.dumps(current_events)
+                    db.session.commit()
+
+def get_events():
+    event_list = []
+    calendar_events = Calendar.query.all()
+
+    for entry in calendar_events:
+        if entry.events:
+            try:
+                event_dictionary = json.loads(entry.events)
+                for title, details in event_dictionary.items():
+                    if str(details.get("user_id")) == str(current_user.id):
+                        event_list.append(entry.date)
+            except json.JSONDecodeError:
+                continue
+    return event_list
 
 @app.route('/add_wishlist_item/<int:date_id>', methods=['POST'])
 @login_required

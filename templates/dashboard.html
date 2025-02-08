@@ -30,6 +30,7 @@
     
     <!-- Calendar Dates -->
     <div class="calendar-dates row" id="calendarDates"></div>
+    <div style="height: 20px;"></div>
 </div>
 
 <div class="row">
@@ -106,18 +107,17 @@
 {% block scripts %}
 <script>
     let modal;
-    let currentMonth = new Date().getMonth(); // Current month (0-indexed)
-    let currentYear = new Date().getFullYear(); // Current year
-
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+    let eventDates = {{ calendar_dates | tojson }};
+    
     document.addEventListener('DOMContentLoaded', function() {
         modal = new bootstrap.Modal(document.getElementById('wishlistModal'));
-        generateCalendar();  // Generate the initial calendar when the page loads
+        generateCalendar();
     });
 
     function changeMonth(offset) {
         currentMonth += offset;
-
-        // Handle year transition
         if (currentMonth < 0) {
             currentMonth = 11;
             currentYear -= 1;
@@ -126,7 +126,7 @@
             currentYear += 1;
         }
 
-        generateCalendar();  // Regenerate calendar with updated month/year
+        generateCalendar();
     }
 
     function generateCalendar() {
@@ -135,45 +135,44 @@
             "July", "August", "September", "October", "November", "December"
         ];
 
-        // Update calendar header
         document.getElementById("calendarMonthYear").textContent = `${monthNames[currentMonth]} ${currentYear}`;
-        
-        // Calculate the first day of the month and the number of days in the month
-        const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay(); // Day the month starts
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate(); // Total days in the month
 
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
         const calendarDates = document.getElementById("calendarDates");
-        calendarDates.innerHTML = ""; // Clear previous calendar content
+        calendarDates.innerHTML = "";
 
         let currentDay = 1;
-        
-        // Creating the calendar grid layout dynamically
         for (let week = 0; week < 6; week++) {
             const rowDiv = document.createElement("div");
-            rowDiv.classList.add("row"); // Bootstrap row class
+            rowDiv.classList.add("row");
 
             for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
                 const colDiv = document.createElement("div");
-                colDiv.classList.add("col", "text-center"); // Add Bootstrap column class and center the content
+                colDiv.classList.add("col", "text-center");
 
-                // If we're in the first week, add empty divs before the 1st of the month
                 if (week === 0 && dayOfWeek < firstDayOfMonth) {
-                    colDiv.classList.add("empty"); // Add empty day
+                    colDiv.classList.add("empty");
                 } else if (currentDay <= daysInMonth) {
-                    // Add actual days of the month
-                    colDiv.innerHTML = `
-                        <div class="card">
-                            <div class="card-body p-2">${currentDay}</div>
-                        </div>
-                    `;
+                    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
+                    const hasEvent = eventDates.includes(dateStr);
+
+                    const cardDiv = document.createElement("div");
+                    cardDiv.classList.add("card");
+                    cardDiv.innerHTML = `<div class="card-body p-2">${currentDay}</div>`;
+
+                    if (hasEvent) {cardDiv.style.backgroundColor = "DodgerBlue";}
+
+                    colDiv.appendChild(cardDiv);
                     currentDay++;
                 }
-
                 rowDiv.appendChild(colDiv);
             }
             calendarDates.appendChild(rowDiv);
+            const spacerDiv = document.createElement("div");
+            spacerDiv.style.height = "2px";
+            calendarDates.appendChild(spacerDiv);
 
-            // Stop once we've filled all days of the month
             if (currentDay > daysInMonth) break;
         }
     }
