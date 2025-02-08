@@ -183,83 +183,89 @@ def add_date():
     
     return render_template('add_date.html')
 
-'''
-@app.route('/remove_date', methods=['GET', 'POST'])
+@app.route('/remove_date/<int:date_id>', methods=['POST'])
 @login_required
-def remove_date():
-    if request.method == 'POST':
-        title = request.form.get('title')
-        date_str = request.form.get('date')
+def remove_date(date_id):
+    special_date = SpecialDate.query.get_or_404(date_id)
 
-        date = datetime.strptime(date_str, '%Y-%m-%d')
+    if special_date.user_id != current_user.id:
+        print("Unauthorized deletion attempt")
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    removed_date = special_date.date.strftime('%Y-%m-%d')
 
-        update_entry('remove', {
-                    'title': title,
-                    'date': date_str,
-                    'description': '',
-                    'category': '',
-                    'user_id': '',
-                    'year': '',
-                    'month': '',
-                    'day': '',
-                    'weekday': ''
-                })
+    update_entry('remove', {
+        'title': special_date.title,
+        'date': removed_date,
+        'description': '',
+        'category': '',
+        'user_id': '',
+        'year': special_date.date.year,
+        'month': special_date.date.month,
+        'day': special_date.date.day,
+        'weekday': special_date.date.weekday() + 1
+    })
 
-        db.session.commit()
-'''
+    db.session.delete(special_date)
+    db.session.commit()
+
+    print(f"Successfully removed event ID {date_id} from DB")
+    return jsonify({'success': True, 'removed_date': removed_date})
+
 
 # operation is a string(add or remove)
 # event is a dictionary of the relevant information to create or remove an event
 def update_entry(operation, event):
     date = event['date']
-    day_week = event['weekday']
-    day_month = event['day']
-    year = event['year']
-    month = event['month']
-    weekday = event['weekday']
     title = event['title']
-    description = event['description']
-    category = event['category']
     check_date = Calendar.query.filter_by(date=date).first()
     
     match operation:
         case 'add':
-            if check_date == None:
+            if check_date is None:
                 new_entry = Calendar(
-                date = date,
-                day_week = weekday,
-                day_month = day_month,
-                year = year,
-                month = month,
-                events = json.dumps({title: {
-                    'title': title,
-                    'date': date,
-                    'description': description,
-                    'category': category,
-                    'user_id': current_user.id
-                }})
+                    date=date,
+                    day_week=event['weekday'],
+                    day_month=event['day'],
+                    year=event['year'],
+                    month=event['month'],
+                    events=json.dumps({
+                        title: {
+                            'title': title,
+                            'date': date,
+                            'description': event['description'],
+                            'category': event['category'],
+                            'user_id': current_user.id
+                        }
+                    })
                 )
                 db.session.add(new_entry)
             else:
-                current_events_json = check_date.events
-                current_events = json.loads(current_events_json)
+                current_events = json.loads(check_date.events) if check_date.events else {}
                 current_events[title] = {
                     'title': title,
                     'date': date,
-                    'description': description,
-                    'category': category,
+                    'description': event['description'],
+                    'category': event['category'],
                     'user_id': current_user.id
                 }
                 check_date.events = json.dumps(current_events)
+
             db.session.commit()
+
         case 'remove':
-            if check_date != None:
-                current_events_json = check_date.events
-                current_events = json.loads(current_events_json)
+            if check_date:
+                current_events = json.loads(check_date.events) if check_date.events else {}
+
                 if title in current_events:
                     del current_events[title]
+
+                if not current_events:
+                    db.session.delete(check_date)
+                else:
                     check_date.events = json.dumps(current_events)
-                    db.session.commit()
+
+                db.session.commit()
 
 def get_events():
     event_list = []
