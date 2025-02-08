@@ -223,7 +223,7 @@
             console.error("Error: dateID is undefined or invalid!");
             return;
         }
-        
+
         fetch(`/remove_date/${dateID}`, { method: 'POST' })
             .then(response => response.json())
             .then(data => {
@@ -234,21 +234,26 @@
                     }
 
                     let removedDate = data.removed_date;
-                    eventDates = eventDates.filter(date => date !== removedDate);
-                    generateCalendar(); 
+                    
+                    // Check if there are still events for this date
+                    let remainingEvents = document.querySelectorAll(`.card-subtitle`);
+                    let eventExistsForDate = Array.from(remainingEvents).some(el => {
+                        let cardDateObj = new Date(el.textContent.trim());
+                        let formattedCardDate = cardDateObj.toISOString().split("T")[0];
+                        return formattedCardDate === removedDate;
+                    });
+
+                    if (!eventExistsForDate) {
+                        eventDates = eventDates.filter(date => date !== removedDate);
+                        removeDateHighlight(removedDate);
+                    }
+
+                    generateCalendar();
                 } else {
                     console.error('Server Error:', data.error);
                 }
             })
             .catch(error => console.error('Fetch Error:', error));
-    }
-
-
-    function resetEventFilter() {
-        const eventCards = document.querySelectorAll(".row .col-md-4");
-        eventCards.forEach(card => {
-            card.style.display = "block";
-        });
     }
 
     function removeDateHighlight(removedDate) {
@@ -260,6 +265,12 @@
             calendarButton.innerHTML = `<div class="card-body p-2 fw-semibold">${removedDate.split('-')[2]}</div>`;
             calendarButton.removeAttribute("onclick");
         }
+    }
+    function resetEventFilter() {
+        const eventCards = document.querySelectorAll(".row .col-md-4");
+        eventCards.forEach(card => {
+            card.style.display = "block";
+        });
     }
 
     function showAddWishlistItem(dateId) {
