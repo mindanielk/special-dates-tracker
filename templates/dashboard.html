@@ -17,8 +17,10 @@
         <button class="btn btn-secondary" onclick="changeMonth(1)">></button>
     </div>
     
+    <div style="height: 20px;"></div>
+
     <!-- Weekday headers (Sun, Mon, Tue, etc.) -->
-    <div class="calendar-days row">
+    <div class="calendar-days row row-cols-7">
         <div class="col text-center">Sun</div>
         <div class="col text-center">Mon</div>
         <div class="col text-center">Tue</div>
@@ -28,8 +30,8 @@
         <div class="col text-center">Sat</div>
     </div>
     
-    <!-- Calendar Dates -->
-    <div class="calendar-dates row" id="calendarDates"></div>
+    <!-- Calendar Dates (JavaScript will handle row structure) -->
+    <div class="calendar-dates" id="calendarDates"></div>
     <div style="height: 20px;"></div>
 </div>
 
@@ -143,35 +145,44 @@
         calendarDates.innerHTML = "";
 
         let currentDay = 1;
+
         for (let week = 0; week < 6; week++) {
             const rowDiv = document.createElement("div");
-            rowDiv.classList.add("row");
+            rowDiv.classList.add("row", "gx-2", "gy-2", "justify-content-center");
 
             for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
                 const colDiv = document.createElement("div");
                 colDiv.classList.add("col", "text-center");
 
                 if (week === 0 && dayOfWeek < firstDayOfMonth) {
-                    colDiv.classList.add("empty");
+                    colDiv.innerHTML = "&nbsp;";
                 } else if (currentDay <= daysInMonth) {
                     const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
                     const hasEvent = eventDates.includes(dateStr);
 
                     const cardDiv = document.createElement("div");
                     cardDiv.classList.add("card");
+
+                    if (hasEvent) {
+                        cardDiv.style.backgroundColor = "DodgerBlue";
+                        cardDiv.style.color = "white";
+                    }
+
                     cardDiv.innerHTML = `<div class="card-body p-2">${currentDay}</div>`;
-
-                    if (hasEvent) {cardDiv.style.backgroundColor = "DodgerBlue";}
-
                     colDiv.appendChild(cardDiv);
                     currentDay++;
                 }
+
                 rowDiv.appendChild(colDiv);
             }
+
             calendarDates.appendChild(rowDiv);
-            const spacerDiv = document.createElement("div");
-            spacerDiv.style.height = "2px";
-            calendarDates.appendChild(spacerDiv);
+
+            if (currentDay <= daysInMonth) {
+                const spacerDiv = document.createElement("div");
+                spacerDiv.style.height = "8px";
+                calendarDates.appendChild(spacerDiv);
+            }
 
             if (currentDay > daysInMonth) break;
         }
