@@ -21,31 +21,6 @@ migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-month_map = {
-    1: ["January", 31],
-    2: ["February", 28],
-    3: ["March", 31],
-    4: ["April", 30],
-    5: ["May", 31],
-    6: ["June", 30],
-    7: ["July", 31],
-    8: ["August", 31],
-    9: ["September", 30],
-    10:["October", 31],
-    11:["November", 30],
-    12:["December", 31]
-}
-
-week_map = {
-    1: "Sunday",
-    2: "Monday",
-    3: "Tuesday",
-    4: "Wednesday",
-    5: "Thursday",
-    6: "Friday",
-    7: "Saturday"
-}
-
 # Database Models
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -62,11 +37,7 @@ class User(UserMixin, db.Model):
     
 class Calendar(db.Model):
     date = db.Column(db.String, primary_key=True, unique=True)
-    day_week = db.Column(db.Integer)
-    day_month = db.Column(db.Integer)
-    month = db.Column(db.Integer)
-    year = db.Column(db.Integer)
-    events = db.Column(db.JSON, nullable=True)     ## Dictionary of event IDs
+    events = db.Column(db.JSON, nullable=True)
 
 class SpecialDate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -135,8 +106,7 @@ def login():
 @login_required
 def dashboard():
     dates = SpecialDate.query.filter_by(user_id=current_user.id).order_by(SpecialDate.date).all()
-    calendar_dates = get_events()
-    return render_template('dashboard.html', dates=dates, calendar_dates=calendar_dates)
+    return render_template('dashboard.html', dates=dates, calendar_dates=get_events())
 
 @app.route('/add_date', methods=['GET', 'POST'])
 @login_required
@@ -148,7 +118,6 @@ def add_date():
         category = request.form.get('category')
         
         date = datetime.strptime(date_str, '%Y-%m-%d')
-        print(date)
         
         special_date = SpecialDate(
             title=title,
@@ -158,21 +127,9 @@ def add_date():
             user_id=current_user.id
         )
 
-        date_array = date_str.split('-')
-        year = int(date_array[0])
-        month = int(date_array[1])
-        day = int(date_array[2])
-        weekday = datetime(year, month, day).weekday() + 1
         update_entry('add', {
                     'title': title,
                     'date': date_str,
-                    'description': description,
-                    'category': category,
-                    'user_id': current_user.id,
-                    'year': year,
-                    'month': month,
-                    'day': day,
-                    'weekday': weekday
                 })
 
         db.session.add(special_date)
@@ -197,14 +154,7 @@ def remove_date(date_id):
 
     update_entry('remove', {
         'title': special_date.title,
-        'date': removed_date,
-        'description': '',
-        'category': '',
-        'user_id': '',
-        'year': special_date.date.year,
-        'month': special_date.date.month,
-        'day': special_date.date.day,
-        'weekday': special_date.date.weekday() + 1
+        'date': removed_date
     })
 
     db.session.delete(special_date)
@@ -213,75 +163,36 @@ def remove_date(date_id):
     print(f"Successfully removed event ID {date_id} from DB")
     return jsonify({'success': True, 'removed_date': removed_date})
 
-
-# operation is a string(add or remove)
-# event is a dictionary of the relevant information to create or remove an event
 def update_entry(operation, event):
     date = event['date']
     title = event['title']
     check_date = Calendar.query.filter_by(date=date).first()
     
-    match operation:
-        case 'add':
-            if check_date is None:
-                new_entry = Calendar(
-                    date=date,
-                    day_week=event['weekday'],
-                    day_month=event['day'],
-                    year=event['year'],
-                    month=event['month'],
-                    events=json.dumps({
-                        title: {
-                            'title': title,
-                            'date': date,
-                            'description': event['description'],
-                            'category': event['category'],
-                            'user_id': current_user.id
-                        }
-                    })
-                )
-                db.session.add(new_entry)
-            else:
-                current_events = json.loads(check_date.events) if check_date.events else {}
-                current_events[title] = {
-                    'title': title,
-                    'date': date,
-                    'description': event['description'],
-                    'category': event['category'],
-                    'user_id': current_user.id
-                }
+    if operation == 'add':
+        if check_date is None:
+            new_entry = Calendar(
+                date=date,
+                events=json.dumps({title: event})
+            )
+            db.session.add(new_entry)
+        else:
+            current_events = json.loads(check_date.events) if check_date.events else {}
+            current_events[title] = event
+            check_date.events = json.dumps(current_events)
+        db.session.commit()
+    
+    elif operation == 'remove':
+        if check_date:
+            current_events = json.loads(check_date.events) if check_date.events else {}
+            current_events.pop(title, None)
+            if current_events:
                 check_date.events = json.dumps(current_events)
-
+            else:
+                db.session.delete(check_date)
             db.session.commit()
 
-        case 'remove':
-            if check_date:
-                current_events = json.loads(check_date.events) if check_date.events else {}
-
-                if title in current_events:
-                    del current_events[title]
-
-                if not current_events:
-                    db.session.delete(check_date)
-                else:
-                    check_date.events = json.dumps(current_events)
-
-                db.session.commit()
-
 def get_events():
-    event_list = []
-    calendar_events = Calendar.query.all()
-
-    for entry in calendar_events:
-        if entry.events:
-            try:
-                event_dictionary = json.loads(entry.events)
-                for title, details in event_dictionary.items():
-                    if str(details.get("user_id")) == str(current_user.id):
-                        event_list.append(entry.date)
-            except json.JSONDecodeError:
-                continue
-    return event_list
+     return [entry.date for entry in Calendar.query.all() if entry.events]
 
 @app.route('/add_wishlist_item/<int:date_id>', methods=['POST'])
 @login_required
