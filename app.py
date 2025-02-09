@@ -193,6 +193,7 @@ def remove_date(date_id):
         return jsonify({'error': 'Unauthorized'}), 403
     
     removed_date = special_date.date.strftime('%Y-%m-%d')
+    WishlistItem.query.filter_by(special_date_id=date_id).delete()
 
     update_entry('remove', {
         'title': special_date.title,
