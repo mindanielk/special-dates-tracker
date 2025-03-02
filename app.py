@@ -210,7 +210,7 @@ def remove_date(date_id):
     db.session.delete(special_date)
     db.session.commit()
 
-    print(f"Successfully removed event ID {date_id} from DB")
+    print("Successfully removed event ID {date_id} from DB")
     return jsonify({'success': True, 'removed_date': removed_date})
 
 ## Helper function for adding and removing a date
