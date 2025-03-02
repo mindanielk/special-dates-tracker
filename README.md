@@ -100,6 +100,25 @@ flask run
 6. Click the "Ports" tab in the bottom panel
 7. Look for port 5000 - it will have a link to view the application
 
+### Running the Application (Subsequent Visits)
+
+If the project is already set up, start it again with:
+
+```bash
+cd special-dates-tracker  
+# Windows
+venv\Scripts\activate  
+# macOS/Linux
+source venv/bin/activate 
+flask run
+```
+
+If dependencies or the database schema have changed, run:
+```bash
+pip install -r requirements.txt  
+flask db upgrade  
+```
+
 ### Collaboration Features
 - **Live Share**: Click the Live Share extension icon to start a collaboration session
 - **Source Control**: Use the Source Control tab to manage changes
@@ -120,7 +139,7 @@ git checkout -b feature/your-feature-name
 git add .
 git commit -m "Description of your changes"
 git push origin feature/your-feature-name
-```
+
 
 4. Create a Pull Request from the GitHub interface
 
