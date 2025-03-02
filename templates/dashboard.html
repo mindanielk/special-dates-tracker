@@ -1,3 +1,4 @@
+<!-- dashboard.html -->
 {% extends "base.html" %}
 {% block content %}
 <div class="row">
@@ -12,6 +13,7 @@
     </div>
 </div>
 
+<!-- Calendar -->
 <div class="calendar">
     <div class="calendar-header text-center d-flex justify-content-between align-items-center" id="calendarHeader">
         <!-- Navigation buttons to go to the previous and next month -->
@@ -39,6 +41,7 @@
     <div style="height: 20px;"></div>
 </div>
 
+<!-- Special Date Cards -->
 <div class="row">
     {% for date in dates %}
     <div class="col-md-4 mb-4">
@@ -121,11 +124,13 @@
     let currentYear = new Date().getFullYear();
     let eventDates = {{ calendar_dates | tojson }};
     
+    // Generates page on load
     document.addEventListener('DOMContentLoaded', function() {
         modal = new bootstrap.Modal(document.getElementById('wishlistModal'));
         generateCalendar();
     });
 
+    // Helper function to regenerate calendar when navigating months/years
     function changeMonth(offset) {
         currentMonth += offset;
         if (currentMonth < 0) {
@@ -135,17 +140,21 @@
             currentMonth = 0;
             currentYear += 1;
         }
-
         generateCalendar();
     }
 
+    // Generates the calendar
+    // Highlights dates with events
+    // Removes highlight when all events for a given date are removed
     function generateCalendar() {
         const monthNames = [
             "January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"
         ];
 
-        document.getElementById("calendarMonthYear").textContent = `${monthNames[currentMonth]} ${currentYear}`;
+        document.getElementById("calendarMonthYear").textContent = `
+            ${monthNames[currentMonth]} 
+            ${currentYear}`;
 
         const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
@@ -165,7 +174,10 @@
                 if (week === 0 && dayOfWeek < firstDayOfMonth) {
                     colDiv.innerHTML = "&nbsp;";
                 } else if (currentDay <= daysInMonth) {
-                    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
+                    const dateStr = `
+                        ${currentYear}-
+                        ${String(currentMonth + 1).padStart(2, '0')}-
+                        ${String(currentDay).padStart(2, '0')}`;
                     const hasEvent = eventDates.includes(dateStr);
 
                     const cardDiv = document.createElement("div");
@@ -180,22 +192,22 @@
                             </button>`;
                     } else {
                         cardDiv.classList.add("bg-light", "text-dark");
-                        cardDiv.innerHTML = `<div class="card-body p-2 fw-semibold">${currentDay}</div>`;
+                        cardDiv.innerHTML = `
+                            <div class="card-body p-2 fw-semibold">
+                            ${currentDay}</div>`;
                     }
-
                     colDiv.appendChild(cardDiv);
                     currentDay++;
                 }
-
                 rowDiv.appendChild(colDiv);
             }
-
             calendarDates.appendChild(rowDiv);
 
             if (currentDay > daysInMonth) break;
         }
     }
 
+    // Function for filtering visible cards when a highlighted date is clicked
     function filterEventsByDate(selectedDate) {
         const eventCards = document.querySelectorAll(".row .col-md-4");
 
@@ -216,6 +228,7 @@
         });
     }
 
+    // Function for removing a special date card
     function removeEventCard(dateID, button) {
         console.log("Attempting to remove dateID:", dateID);
 
@@ -256,16 +269,21 @@
             .catch(error => console.error('Fetch Error:', error));
     }
 
+    // Handles removing the highlight for empty dates
     function removeDateHighlight(removedDate) {
         let calendarButton = document.querySelector(`button[data-date="${removedDate}"]`);
         
         if (calendarButton) {
             calendarButton.classList.remove("btn-primary", "text-white");
             calendarButton.classList.add("bg-light", "text-dark");
-            calendarButton.innerHTML = `<div class="card-body p-2 fw-semibold">${removedDate.split('-')[2]}</div>`;
+            calendarButton.innerHTML = `
+                <div class="card-body p-2 fw-semibold">
+                ${removedDate.split('-')[2]}</div>`;
             calendarButton.removeAttribute("onclick");
         }
     }
+
+    // Reset card filter to display them all again
     function resetEventFilter() {
         const eventCards = document.querySelectorAll(".row .col-md-4");
         eventCards.forEach(card => {
@@ -273,6 +291,7 @@
         });
     }
 
+    // Brings up a window for adding an item to a wishlist for the given date
     function showAddWishlistItem(dateId) {
         document.getElementById('dateId').value = dateId.toString();
         document.getElementById('itemName').value = '';
@@ -282,6 +301,7 @@
         modal.show();
     }
 
+    // Takes the information from above and creates the wishlist
     function submitWishlistItem() {
         const dateId = document.getElementById('dateId').value;
         const itemData = {
