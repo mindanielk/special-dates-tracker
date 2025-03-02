@@ -46,13 +46,6 @@ python
 >>> exit()
 ```
 
-5. Run the application:
-```bash
-python app.py
-```
-
-The application will be available at `http://127.0.0.1:5000/`
-
 ## Environment Setup
 
 1. Copy the environment template:
@@ -66,6 +59,37 @@ python -c "import secrets; print(secrets.token_hex(24))"
 ```
 
 3. Update `.env` with your secret key and database settings
+
+
+## Run the application:
+
+```bash
+python app.py
+```
+
+The application will be available at `http://127.0.0.1:5000/`
+
+### Running the Application (Subsequent Visits)
+
+If the project is already set up, start it again with:
+
+```bash
+cd special-dates-tracker  
+
+# Windows
+venv\Scripts\activate  
+
+# macOS/Linux
+source venv/bin/activate 
+
+flask run
+```
+
+If dependencies or the database schema have changed, run:
+```bash
+pip install -r requirements.txt  
+flask db upgrade  
+```
 
 For development, the SQLite database is sufficient. For production, we'll switch to PostgreSQL later.
 
@@ -99,25 +123,6 @@ flask run
 
 6. Click the "Ports" tab in the bottom panel
 7. Look for port 5000 - it will have a link to view the application
-
-### Running the Application (Subsequent Visits)
-
-If the project is already set up, start it again with:
-
-```bash
-cd special-dates-tracker  
-# Windows
-venv\Scripts\activate  
-# macOS/Linux
-source venv/bin/activate 
-flask run
-```
-
-If dependencies or the database schema have changed, run:
-```bash
-pip install -r requirements.txt  
-flask db upgrade  
-```
 
 ### Collaboration Features
 - **Live Share**: Click the Live Share extension icon to start a collaboration session
