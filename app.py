@@ -131,7 +131,7 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        remember = request.form.get('remember') == 'on'
+        remember = 'remember' in request.form
         user = User.query.filter_by(username=username).first()
         
         if user and user.check_password(password):

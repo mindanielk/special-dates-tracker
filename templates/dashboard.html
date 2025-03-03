@@ -174,10 +174,10 @@
                 if (week === 0 && dayOfWeek < firstDayOfMonth) {
                     colDiv.innerHTML = "&nbsp;";
                 } else if (currentDay <= daysInMonth) {
-                    const dateStr = `
-                        ${currentYear}-
-                        ${String(currentMonth + 1).padStart(2, '0')}-
-                        ${String(currentDay).padStart(2, '0')}`;
+                    const dateStr = 
+                        `${currentYear}-` + 
+                        `${String(currentMonth + 1).padStart(2, '0')}-` + 
+                        `${String(currentDay).padStart(2, '0')}`;
                     const hasEvent = eventDates.includes(dateStr);
 
                     const cardDiv = document.createElement("div");
